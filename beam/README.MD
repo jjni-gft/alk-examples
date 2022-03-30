@@ -9,6 +9,8 @@ Znajdziecie tu 4 przykłady, które omawialiśmy sobie na zajęciach przy okazji
 * `example_sql` - przykład BeamSQL
 * `example_flex_template` - pliki niezbędne do utworzenia flex template
 
+Oraz kilka przykładowych plików CSV wygenerowanych przy użyciu https://extendsclass.com/csv-generator.html
+
 ## Polecenia
 ### Prerequisites
 * musicie mieć przygotowane "virtual env" dla Python z zainstalowanym Beam'em. Dodałem przykładowy `requirements.txt` do repozytorium. Można go odpalic poleceniem `pip install -f requirments.txt` (musicie podać ścieżke do pliku, jeśli nie jesteście w tym samym folderze co ten plik).
