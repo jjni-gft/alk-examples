@@ -1,0 +1,16 @@
+{
+  "name": "SuperWordCounter",
+  "description": "Taki tam zliczacz.",
+  "parameters": [
+    {
+      "name": "input",
+      "label": "Plik wejsciowy",
+      "helpText": "Sciezka do pliku wejsciowego"
+    },
+    {
+      "name": "output",
+      "label": "Plik wyjsciowy",
+      "helpText": "Nazwa pliku wyjsciowego"
+    }
+  ]
+}
