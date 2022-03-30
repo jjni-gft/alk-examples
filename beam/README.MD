@@ -32,7 +32,7 @@ Polecenia niezbędne do stworzenia Flex Template:
 export TEMPLATE_IMAGE="gcr.io/<project_id>/dataflow/wordcounter:latest
 export REGION="europe-west3"
 ```
-2. Zbudowanie Docker image
+2. Zbudowanie Docker image (musicie być wewnątrz katalogu z _Dockerfile_)
 ```
 gcloud builds submit --tag $TEMPLATE_IMAGE .
 ```
