@@ -11,7 +11,7 @@ def trigger_flow(msg, context):
         location='europe-west3',
         body={
             'launch_parameter': {
-                'container_spec_gcs_path':"gs://<bucket>/dataflow/templates/super_word_count.json",
+                'container_spec_gcs_path':"gs://<bucket>/dataflow/templates/word_count.json",
                 'job_name': f"super-word-count-{datetime.now().strftime('%Y%m%d-%H%M')}",
                 'parameters':{
                     "input": f"gs://{event['bucket']}/{event['name']}",
