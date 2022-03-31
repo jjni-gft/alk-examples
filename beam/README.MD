@@ -9,6 +9,8 @@ Znajdziecie tu 4 przykłady, które omawialiśmy sobie na zajęciach przy okazji
 * `example_sql` - przykład BeamSQL
 * `example_flex_template` - pliki niezbędne do utworzenia flex template
 
+Oraz Cloud function służącą do odpalania Flex template w kataloggu `cloud_function`
+
 Oraz kilka przykładowych plików CSV wygenerowanych przy użyciu https://extendsclass.com/csv-generator.html
 
 ## Polecenia
