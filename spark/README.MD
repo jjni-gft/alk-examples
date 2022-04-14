@@ -3,7 +3,7 @@
 Przykłady bazują na przykładach znajdujących się w repozytorium https://github.com/apache/spark/tree/master/examples/src/main/python - serdecznie zachęcam, żeby pobawić się nimi również.
 
 ## Zawartość
-Znajdziecie tu 5 przykładów, które omawialiśmy sobie na zajęciach przy okazji poznawania Apache Beam:
+Znajdziecie tu 5 przykładów, które omawialiśmy sobie na zajęciach przy okazji poznawania Apache Spark:
 * `example_wordcount_rdd` - pokazuje jak można zrobić filtrowanie, mapowanie korzystając z nispoziomowego API RDD
 * `example_wordcount` - pokazuje jak można zrobić filtrowanie, mapowanie korzystając z wysokopoziomowego API DataFrame
 * `example_csv` - przykład pobierania danych z plików CSV
