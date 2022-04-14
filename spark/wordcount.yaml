@@ -1,0 +1,18 @@
+placement:
+  clusterSelector:
+    clusterLabels:
+      workflow-cluster: 'true'
+jobs:
+  - stepId: wordcount
+    pysparkJob:
+      mainPythonFileUri: 'gs://<bucket>/code/spark/wordcount.py'
+      args:
+      - 'input'
+      - 'output'
+parameters:
+- name: INPUT
+  fields:
+  - jobs['wordcount'].pysparkJob.args[0]
+- name: OUTPUT
+  fields:
+  - jobs['wordcount'].pysparkJob.args[1]
