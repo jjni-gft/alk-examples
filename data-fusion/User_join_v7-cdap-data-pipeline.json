@@ -1,0 +1,245 @@
+{
+    "name": "User_join_v7",
+    "description": "Data Pipeline Application",
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "version": "6.6.0",
+        "scope": "SYSTEM"
+    },
+    "config": {
+        "resources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "driverResources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "connections": [
+            {
+                "from": "GCS",
+                "to": "Wrangler"
+            },
+            {
+                "from": "Wrangler",
+                "to": "Joiner"
+            },
+            {
+                "from": "Joiner",
+                "to": "BigQuery"
+            },
+            {
+                "from": "GCS2",
+                "to": "Joiner"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "properties": {},
+        "processTimingEnabled": true,
+        "stageLoggingEnabled": false,
+        "stages": [
+            {
+                "name": "GCS",
+                "plugin": {
+                    "name": "GCSFile",
+                    "type": "batchsource",
+                    "label": "GCS",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.19.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "useConnection": "true",
+                        "referenceName": "users",
+                        "path": "gs://jezioro-danych-tonal-unity-343118/users/version=1/",
+                        "format": "text",
+                        "sampleSize": "1000",
+                        "skipHeader": "false",
+                        "filenameOnly": "false",
+                        "recursive": "true",
+                        "encrypted": "false",
+                        "fileEncoding": "UTF-8",
+                        "schema": "{\"type\":\"record\",\"name\":\"textfile\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}",
+                        "connection": "${conn(Cloud Storage Default)}"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"textfile\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
+                    }
+                ],
+                "id": "GCS",
+                "type": "batchsource",
+                "label": "GCS",
+                "icon": "fa-plug"
+            },
+            {
+                "name": "Wrangler",
+                "plugin": {
+                    "name": "Wrangler",
+                    "type": "transform",
+                    "label": "Wrangler",
+                    "artifact": {
+                        "name": "wrangler-transform",
+                        "version": "4.6.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "field": "*",
+                        "precondition": "false",
+                        "directives": "parse-as-csv :body ',' true\ndrop :body\nset-type :id int",
+                        "on-error": "skip-error",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"id\",\"type\":[\"int\",\"null\"]},{\"name\":\"firstname\",\"type\":[\"string\",\"null\"]},{\"name\":\"lastname\",\"type\":[\"string\",\"null\"]},{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"email2\",\"type\":[\"string\",\"null\"]},{\"name\":\"profession\",\"type\":[\"string\",\"null\"]}]}",
+                        "workspaceId": "7890c12b-2293-4e42-a84b-81b84fdab6d4"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"id\",\"type\":[\"int\",\"null\"]},{\"name\":\"firstname\",\"type\":[\"string\",\"null\"]},{\"name\":\"lastname\",\"type\":[\"string\",\"null\"]},{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"email2\",\"type\":[\"string\",\"null\"]},{\"name\":\"profession\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ],
+                "inputSchema": [
+                    {
+                        "name": "GCS",
+                        "schema": "{\"type\":\"record\",\"name\":\"textfile\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
+                    }
+                ],
+                "id": "Wrangler",
+                "type": "transform",
+                "label": "Wrangler",
+                "icon": "icon-DataPreparation"
+            },
+            {
+                "name": "Joiner",
+                "plugin": {
+                    "name": "Joiner",
+                    "type": "batchjoiner",
+                    "label": "Joiner",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "2.8.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "selectedFields": "Wrangler.id as id,Wrangler.firstname as firstname,Wrangler.lastname as lastname,Wrangler.email as email,Wrangler.email2 as email2,Wrangler.profession as profession,GCS2.city as city",
+                        "requiredInputs": "Wrangler",
+                        "conditionType": "basic",
+                        "schema": "{\"type\":\"record\",\"name\":\"join.typeoutput\",\"fields\":[{\"name\":\"id\",\"type\":[\"int\",\"null\"]},{\"name\":\"firstname\",\"type\":[\"string\",\"null\"]},{\"name\":\"lastname\",\"type\":[\"string\",\"null\"]},{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"email2\",\"type\":[\"string\",\"null\"]},{\"name\":\"profession\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":\"string\"}]}",
+                        "joinKeys": "Wrangler.id = GCS2.id"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"join.typeoutput\",\"fields\":[{\"name\":\"id\",\"type\":[\"int\",\"null\"]},{\"name\":\"firstname\",\"type\":[\"string\",\"null\"]},{\"name\":\"lastname\",\"type\":[\"string\",\"null\"]},{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"email2\",\"type\":[\"string\",\"null\"]},{\"name\":\"profession\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":\"string\"}]}"
+                    }
+                ],
+                "inputSchema": [
+                    {
+                        "name": "Wrangler",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"id\",\"type\":[\"int\",\"null\"]},{\"name\":\"firstname\",\"type\":[\"string\",\"null\"]},{\"name\":\"lastname\",\"type\":[\"string\",\"null\"]},{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"email2\",\"type\":[\"string\",\"null\"]},{\"name\":\"profession\",\"type\":[\"string\",\"null\"]}]}"
+                    },
+                    {
+                        "name": "GCS2",
+                        "schema": "{\"type\":\"record\",\"name\":\"text\",\"fields\":[{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"city\",\"type\":\"string\"}]}"
+                    }
+                ],
+                "id": "Joiner",
+                "type": "batchjoiner",
+                "label": "Joiner",
+                "icon": "icon-joiner"
+            },
+            {
+                "name": "BigQuery",
+                "plugin": {
+                    "name": "BigQueryTable",
+                    "type": "batchsink",
+                    "label": "BigQuery",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.19.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "referenceName": "sink_user",
+                        "project": "auto-detect",
+                        "dataset": "jezioro_danych",
+                        "table": "test",
+                        "serviceAccountType": "filePath",
+                        "serviceFilePath": "auto-detect",
+                        "operation": "insert",
+                        "truncateTable": "true",
+                        "allowSchemaRelaxation": "false",
+                        "location": "EU",
+                        "createPartitionedTable": "false",
+                        "partitioningType": "NONE",
+                        "schema": "{\"name\":\"etlSchemaBody\",\"type\":\"record\",\"fields\":[{\"name\":\"id\",\"type\":[\"int\",\"null\"]},{\"name\":\"firstname\",\"type\":[\"string\",\"null\"]},{\"name\":\"lastname\",\"type\":[\"string\",\"null\"]},{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"email2\",\"type\":[\"string\",\"null\"]},{\"name\":\"profession\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                },
+                "outputSchema": "{\"name\":\"etlSchemaBody\",\"type\":\"record\",\"fields\":[{\"name\":\"id\",\"type\":[\"int\",\"null\"]},{\"name\":\"firstname\",\"type\":[\"string\",\"null\"]},{\"name\":\"lastname\",\"type\":[\"string\",\"null\"]},{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"email2\",\"type\":[\"string\",\"null\"]},{\"name\":\"profession\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]}]}",
+                "inputSchema": [
+                    {
+                        "name": "Joiner",
+                        "schema": "{\"type\":\"record\",\"name\":\"join.typeoutput\",\"fields\":[{\"name\":\"id\",\"type\":[\"int\",\"null\"]},{\"name\":\"firstname\",\"type\":[\"string\",\"null\"]},{\"name\":\"lastname\",\"type\":[\"string\",\"null\"]},{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"email2\",\"type\":[\"string\",\"null\"]},{\"name\":\"profession\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":\"string\"}]}"
+                    }
+                ],
+                "id": "BigQuery",
+                "type": "batchsink",
+                "label": "BigQuery",
+                "icon": "fa-plug"
+            },
+            {
+                "name": "GCS2",
+                "plugin": {
+                    "name": "GCSFile",
+                    "type": "batchsource",
+                    "label": "GCS2",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.19.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "useConnection": "false",
+                        "project": "auto-detect",
+                        "serviceAccountType": "filePath",
+                        "serviceFilePath": "auto-detect",
+                        "referenceName": "cities",
+                        "path": "gs://jezioro-danych-tonal-unity-343118/cities/cities.csv",
+                        "format": "csv",
+                        "sampleSize": "1000",
+                        "skipHeader": "true",
+                        "filenameOnly": "false",
+                        "recursive": "false",
+                        "encrypted": "false",
+                        "fileEncoding": "UTF-8",
+                        "schema": "{\"type\":\"record\",\"name\":\"text\",\"fields\":[{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"city\",\"type\":\"string\"}]}"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"text\",\"fields\":[{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"city\",\"type\":\"string\"}]}"
+                    }
+                ],
+                "id": "GCS2",
+                "type": "batchsource",
+                "label": "GCS2",
+                "icon": "fa-plug"
+            }
+        ],
+        "schedule": "0 1 */1 * *",
+        "engine": "spark",
+        "numOfRecordsPreview": 100,
+        "rangeRecordsPreview": {
+            "min": 1,
+            "max": "5000"
+        },
+        "description": "Data Pipeline Application",
+        "maxConcurrentRuns": 1
+    }
+}

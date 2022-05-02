@@ -1,0 +1,189 @@
+{
+    "name": "WordCount_v1",
+    "description": "Data Pipeline Application",
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "version": "6.6.0",
+        "scope": "SYSTEM"
+    },
+    "config": {
+        "resources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "driverResources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "connections": [
+            {
+                "from": "GCSFile",
+                "to": "Wrangler"
+            },
+            {
+                "from": "Wrangler",
+                "to": "Group By"
+            },
+            {
+                "from": "Group By",
+                "to": "BigQuery"
+            }
+        ],
+        "postActions": [],
+        "properties": {},
+        "processTimingEnabled": true,
+        "stageLoggingEnabled": true,
+        "stages": [
+            {
+                "name": "GCSFile",
+                "plugin": {
+                    "name": "GCSFile",
+                    "type": "batchsource",
+                    "label": "GCSFile",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.19.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "path": "${input.path}",
+                        "useConnection": "true",
+                        "format": "text",
+                        "connection": "${conn(Cloud Storage Default)}",
+                        "referenceName": "input_file",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}",
+                        "sampleSize": "1000",
+                        "skipHeader": "false",
+                        "filenameOnly": "false",
+                        "recursive": "false",
+                        "encrypted": "false",
+                        "fileEncoding": "UTF-8"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}"
+                    }
+                ],
+                "id": "GCSFile",
+                "type": "batchsource",
+                "label": "GCSFile",
+                "icon": "fa-plug"
+            },
+            {
+                "name": "Wrangler",
+                "plugin": {
+                    "name": "Wrangler",
+                    "type": "transform",
+                    "label": "Wrangler",
+                    "artifact": {
+                        "name": "wrangler-transform",
+                        "version": "4.6.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "directives": "split-to-rows body \\s+\nlowercase body\nfilter-rows-on regex-match body \\W+\nfilter-rows-on condition-true body == null || body =~ \"^\\W*$\"",
+                        "field": "*",
+                        "precondition": "false",
+                        "workspaceId": "f1eff1d2-6891-4153-9e15-bbb12861f241",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":[\"string\",\"null\"]}]}",
+                        "on-error": "fail-pipeline"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":[\"string\",\"null\"]}]}",
+                "inputSchema": [
+                    {
+                        "name": "GCSFile",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}"
+                    }
+                ],
+                "id": "Wrangler",
+                "type": "transform",
+                "label": "Wrangler",
+                "icon": "icon-DataPreparation"
+            },
+            {
+                "name": "Group By",
+                "plugin": {
+                    "name": "GroupByAggregate",
+                    "type": "batchaggregator",
+                    "label": "Group By",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "2.8.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "groupByFields": "body",
+                        "aggregates": "count:Count(body)"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody.typeagg\",\"fields\":[{\"name\":\"body\",\"type\":[\"string\",\"null\"]},{\"name\":\"count\",\"type\":\"long\"}]}"
+                    }
+                ],
+                "inputSchema": [
+                    {
+                        "name": "Wrangler",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ],
+                "id": "Group-By",
+                "type": "batchaggregator",
+                "label": "Group By",
+                "icon": "icon-groupbyaggregate"
+            },
+            {
+                "name": "BigQuery",
+                "plugin": {
+                    "name": "BigQueryTable",
+                    "type": "batchsink",
+                    "label": "BigQuery",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.19.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "referenceName": "sink",
+                        "project": "auto-detect",
+                        "dataset": "jezioro_danych",
+                        "table": "datafusion_wordcount",
+                        "serviceAccountType": "filePath",
+                        "serviceFilePath": "auto-detect",
+                        "operation": "insert",
+                        "truncateTable": "false",
+                        "allowSchemaRelaxation": "false",
+                        "location": "EU",
+                        "createPartitionedTable": "false",
+                        "partitioningType": "NONE",
+                        "schema": "{\"name\":\"etlSchemaBody\",\"type\":\"record\",\"fields\":[{\"name\":\"body\",\"type\":[\"string\",\"null\"]},{\"name\":\"count\",\"type\":\"int\"}]}"
+                    }
+                },
+                "outputSchema": "{\"name\":\"etlSchemaBody\",\"type\":\"record\",\"fields\":[{\"name\":\"body\",\"type\":[\"string\",\"null\"]},{\"name\":\"count\",\"type\":\"int\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "Group By",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody.typeagg\",\"fields\":[{\"name\":\"body\",\"type\":[\"string\",\"null\"]},{\"name\":\"count\",\"type\":\"long\"}]}"
+                    }
+                ],
+                "id": "BigQuery",
+                "type": "batchsink",
+                "label": "BigQuery",
+                "icon": "fa-plug"
+            }
+        ],
+        "schedule": "0 1 */1 * *",
+        "engine": "spark",
+        "numOfRecordsPreview": 100,
+        "rangeRecordsPreview": {
+            "min": 1,
+            "max": "5000"
+        },
+        "description": "Data Pipeline Application",
+        "maxConcurrentRuns": 1
+    }
+}
