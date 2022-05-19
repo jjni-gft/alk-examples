@@ -83,7 +83,6 @@ def main(argv=None):
         | 'Split' >> (beam.FlatMap(find_words).with_output_types(str))
         | 'PairWithOne' >> beam.Map(lambda x: (x, 1))
         | beam.WindowInto(window.FixedWindows(30, 0))
-        # | beam.WindowInto(window.FixedWindows(30, 0), trigger=OrFinally(Repeatedly(AfterCount(5000)), AfterWatermark()), accumulation_mode=AccumulationMode.DISCARDING)
         | 'Group' >> beam.GroupByKey()
         | 'Count' >> beam.Map(count_ones)
         | 'Format' >> beam.ParDo(FormatDoFn()))
